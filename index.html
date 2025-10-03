@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Weather App</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex; align-items: center; justify-content: center;
+      min-height: 100vh;
+      background: linear-gradient(120deg, #84fab0, #8fd3f4);
+      margin: 0;
+    }
+    .card {
+      background: rgba(255,255,255,0.9);
+      border-radius: 12px;
+      padding: 2rem;
+      width: 90%;
+      max-width: 380px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    h2 { text-align: center; margin-bottom: 1.5rem; }
+    .input-group {
+      display: flex;
+      margin-bottom: 1rem;
+    }
+    .input-group input {
+      flex: 1;
+      padding: 0.6rem;
+      border: 1px solid #aaa;
+      border-radius: 8px 0 0 8px;
+      font-size: 1rem;
+    }
+    .input-group button {
+      padding: 0.6rem 1rem;
+      border: none;
+      background: #4A90E2;
+      color: white;
+      font-size: 1rem;
+      border-radius: 0 8px 8px 0;
+      cursor: pointer;
+    }
+    .input-group button:hover {
+      background: #357ABD;
+    }
+    .output {
+      text-align: center;
+      margin-top: 1rem;
+    }
+    .output .temp {
+      font-size: 2.5rem;
+      font-weight: bold;
+    }
+    .output .desc {
+      font-size: 1.2rem;
+      text-transform: capitalize;
+      margin: 0.5rem 0;
+    }
+    .output .details {
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+    .error {
+      color: #D8000C;
+      background-color: #FFBABA;
+      padding: 0.5rem;
+      margin-top: 1rem;
+      border-radius: 5px;
+      text-align: center;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h2>Weather Checker</h2>
+    <div class="input-group">
+      <input type="text" id="cityInput" placeholder="Enter city name" />
+      <button id="searchBtn">Search</button>
+    </div>
+    <div id="weatherOutput" class="output"></div>
+    <div id="errorMsg" class="error"></div>
+  </div>
+
+  <script>
+    const apiKey = "YOUR_API_KEY";  // <--- Replace with your real API key
+
+    const cityInput = document.getElementById("cityInput");
+    const searchBtn = document.getElementById("searchBtn");
+    const weatherOutput = document.getElementById("weatherOutput");
+    const errorMsg = document.getElementById("errorMsg");
+
+    async function getWeather(city) {
+      weatherOutput.innerHTML = "";
+      errorMsg.style.display = "none";
+
+      if (!city) {
+        errorMsg.style.display = "block";
+        errorMsg.innerText = "Please enter a city.";
+        return;
+      }
+
+      const url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&units=metric&appid=${apiKey}`;
+      console.log("Request URL:", url);
+
+      try {
+        const response = await fetch(url);
+        console.log("Status code:", response.status);
+
+        const data = await response.json();
+        if (!response.ok) {
+          // error from API
+          throw new Error(data.message || `Error ${response.status}`);
+        }
+        showWeather(data);
+      } catch (err) {
+        console.error("Error:", err.message);
+        errorMsg.style.display = "block";
+        errorMsg.innerText = err.message;
+      }
+    }
+
+    function showWeather(data) {
+      const city = data.name;
+      const country = data.sys?.country || "";
+      const temp = data.main.temp;
+      const desc = data.weather[0].description;
+      const humidity = data.main.humidity;
+      const wind = data.wind.speed;
+
+      weatherOutput.innerHTML = `
+        <div class="temp">${temp.toFixed(1)}°C</div>
+        <div class="desc">${desc}</div>
+        <div class="details">
+          <div>Location: ${city}${country ? ", " + country : ""}</div>
+          <div>Humidity: ${humidity}%</div>
+          <div>Wind speed: ${wind} m/s</div>
+        </div>
+      `;
+    }
+
+    searchBtn.addEventListener("click", () => {
+      getWeather(cityInput.value.trim());
+    });
+    cityInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        getWeather(cityInput.value.trim());
+      }
+    });
+  </script>
+
+</body>
+</html>
